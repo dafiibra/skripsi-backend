@@ -69,7 +69,7 @@ async function getCombinedData(req, res) {
     const pencariKerjaData = await getAggregatedData(PencariKerjaTerdaftar);
     const lowonganKerjaData = await getAggregatedData(LowonganKerjaTerdaftar);
 
-    // Get a list of all unique provinces
+    // Gabungkan data berdasarkan provinsi
     const allProvinces = [...new Set([
       ...Object.keys(pencariKerjaData),
       ...Object.keys(lowonganKerjaData)
@@ -86,12 +86,37 @@ async function getCombinedData(req, res) {
       'LOWONGAN KERJA PEREMPUAN': lowonganKerjaData[provinsi]?.genderData['perempuan'] || 0
     }));
 
-    res.json(combinedData);
+    // Hitung standar deviasi, mean, batas atas, dan batas bawah untuk setiap variabel
+    const variables = [
+      'JUMLAH PENCARI KERJA TERDAFTAR',
+      'JUMLAH LOWONGAN KERJA TERDAFTAR',
+      'PENCARI KERJA LAKI-LAKI',
+      'PENCARI KERJA PEREMPUAN',
+      'LOWONGAN KERJA LAKI-LAKI',
+      'LOWONGAN KERJA PEREMPUAN'
+    ];
+
+    const stats = {};
+    variables.forEach((variable) => {
+      const values = combinedData.map((item) => item[variable]);
+      const mean = values.reduce((sum, val) => sum + val, 0) / values.length;
+      const stdDev = Math.sqrt(
+        values.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / (values.length -1)
+      );
+
+      stats[`stdDev_${variable}`] = parseFloat(stdDev.toFixed(2));
+      stats[`mean_${variable}`] = parseFloat(mean.toFixed(2));
+      stats[`upper_${variable}`] = parseFloat((mean + stdDev * 0.4).toFixed(2));
+      stats[`lower_${variable}`] = parseFloat((mean - stdDev * 0.4).toFixed(2));
+    });
+
+    res.json({ stats, data: combinedData });
   } catch (error) {
     console.error('Error fetching combined data:', error);
     res.status(500).json({ error: 'Failed to fetch data' });
   }
 }
+
 
 async function addPencariKerjaData(req, res) {
   try {
@@ -193,7 +218,6 @@ async function updateData(req, res) {
   try {
     const { provinsi } = req.params;
     const updateData = req.body;
-    const currentYear = new Date().getFullYear();
     
     if (!provinsi) {
       return res.status(400).json({ error: 'Province is required' });
@@ -209,16 +233,9 @@ async function updateData(req, res) {
       if (lakiLaki !== undefined) {
         updates.push(
           PencariKerjaTerdaftar.findOneAndUpdate(
-            { provinsi, gender: 'laki-laki', year: currentYear },
-            { 
-              $set: { 
-                amount: parseInt(lakiLaki),
-                provinsi,
-                gender: 'laki-laki',
-                year: currentYear
-              }
-            },
-            { upsert: true, new: true }
+            { provinsi, gender: 'laki-laki' },
+            { $set: { amount: parseInt(lakiLaki) } },
+            { new: true }
           )
         );
       }
@@ -227,16 +244,9 @@ async function updateData(req, res) {
       if (perempuan !== undefined) {
         updates.push(
           PencariKerjaTerdaftar.findOneAndUpdate(
-            { provinsi, gender: 'perempuan', year: currentYear },
-            { 
-              $set: { 
-                amount: parseInt(perempuan),
-                provinsi,
-                gender: 'perempuan',
-                year: currentYear
-              }
-            },
-            { upsert: true, new: true }
+            { provinsi, gender: 'perempuan' },
+            { $set: { amount: parseInt(perempuan) } },
+            { new: true }
           )
         );
       }
@@ -250,16 +260,9 @@ async function updateData(req, res) {
       if (lakiLaki !== undefined) {
         updates.push(
           LowonganKerjaTerdaftar.findOneAndUpdate(
-            { provinsi, gender: 'laki-laki', year: currentYear },
-            { 
-              $set: { 
-                amount: parseInt(lakiLaki),
-                provinsi,
-                gender: 'laki-laki',
-                year: currentYear
-              }
-            },
-            { upsert: true, new: true }
+            { provinsi, gender: 'laki-laki' },
+            { $set: { amount: parseInt(lakiLaki) } },
+            { new: true }
           )
         );
       }
@@ -268,16 +271,9 @@ async function updateData(req, res) {
       if (perempuan !== undefined) {
         updates.push(
           LowonganKerjaTerdaftar.findOneAndUpdate(
-            { provinsi, gender: 'perempuan', year: currentYear },
-            { 
-              $set: { 
-                amount: parseInt(perempuan),
-                provinsi,
-                gender: 'perempuan',
-                year: currentYear
-              }
-            },
-            { upsert: true, new: true }
+            { provinsi, gender: 'perempuan' },
+            { $set: { amount: parseInt(perempuan) } },
+            { new: true }
           )
         );
       }
