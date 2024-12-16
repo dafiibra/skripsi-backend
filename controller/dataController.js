@@ -122,12 +122,10 @@ async function addPencariKerjaData(req, res) {
   try {
     const { data } = req.body;
     
-    // Validate the incoming data
     if (!Array.isArray(data) || data.length === 0) {
       return res.status(400).json({ error: 'Invalid data format' });
     }
 
-    // Validate each entry
     const isValid = data.every(entry => 
       entry.provinsi && 
       entry.gender && 
@@ -154,12 +152,10 @@ async function addLowonganKerjaData(req, res) {
   try {
     const { data } = req.body;
     
-    // Validate the incoming data
     if (!Array.isArray(data) || data.length === 0) {
       return res.status(400).json({ error: 'Invalid data format' });
     }
 
-    // Validate each entry
     const isValid = data.every(entry => 
       entry.provinsi && 
       entry.gender && 
