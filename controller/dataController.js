@@ -1,5 +1,5 @@
-const PencariKerjaTerdaftar = require('../models/PencariKerjaTerdaftar');
-const LowonganKerjaTerdaftar = require('../models/LowonganKerjaTerdaftar');
+const PencariKerjaTerdaftar = require('../models/pencariKerjaTerdaftar');
+const LowonganKerjaTerdaftar = require('../models/lowonganKerjaTerdaftar');
 const Provinsi = require('../models/Provinsi');
 
 
