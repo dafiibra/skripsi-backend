@@ -16,11 +16,20 @@ app.use(cors({
 app.use(express.json());
 
 // Koneksi ke MongoDB
-const mongoURI = process.env.MONGODB_URI || process.env.MONGO_URI; // Prioritaskan MongoDB Atlas jika ada
+const mongoURI = process.env.MONGO_URI;
+
+if (!mongoURI) {
+  console.error('Error: MONGO_URI is not defined in .env');
+  process.exit(1); // Keluar jika MONGO_URI tidak ditemukan
+}
+
 mongoose.connect(mongoURI, {
 })
   .then(() => console.log('Connected to MongoDB!'))
-  .catch((err) => console.error('Error connecting to MongoDB:', err));
+  .catch((err) => {
+    console.error('Error connecting to MongoDB:', err);
+    process.exit(1); // Keluar jika koneksi gagal
+  });
 
 // Gunakan routes yang sudah dibuat
 app.use('/api', dataRoutes);
