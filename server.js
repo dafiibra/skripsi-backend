@@ -1,42 +1,61 @@
-require('dotenv').config(); // Load environment variables
+require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const dataRoutes = require('./routes/dataRoutes'); // Import route
+const dataRoutes = require('./routes/dataRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 
 const app = express();
 
-// Middleware untuk CORS
+// CORS configuration
 app.use(cors({
-  origin: process.env.CLIENT_ORIGIN || 'http://localhost:5173'
+ origin: [
+   'https://work-map-rust.vercel.app',
+   'http://localhost:5173'
+ ],
+ credentials: true,
+ methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+ allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 // Middleware untuk parsing JSON
 app.use(express.json());
 
-// Koneksi ke MongoDB
+// MongoDB connection
 const mongoURI = process.env.MONGO_URI;
 
 if (!mongoURI) {
-  console.error('Error: MONGO_URI is not defined in .env');
-  process.exit(1); // Keluar jika MONGO_URI tidak ditemukan
+ console.error('Error: MONGO_URI is not defined in .env');
+ process.exit(1);
 }
 
 mongoose.connect(mongoURI, {
 })
-  .then(() => console.log('Connected to MongoDB!'))
-  .catch((err) => {
-    console.error('Error connecting to MongoDB:', err);
-    process.exit(1); // Keluar jika koneksi gagal
-  });
+.then(() => console.log('Connected to MongoDB!'))
+.catch((err) => {
+ console.error('Error connecting to MongoDB:', err);
+ process.exit(1);
+});
 
-// Gunakan routes yang sudah dibuat
+// Routes
 app.use('/api', dataRoutes);
 app.use('/api', adminRoutes);
 
-// Jalankan server
+// Basic error handling
+app.use((err, req, res, next) => {
+ console.error(err.stack);
+ res.status(500).json({ 
+   message: 'Something went wrong!',
+   error: process.env.NODE_ENV === 'development' ? err.message : {}
+ });
+});
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+ res.status(200).json({ status: 'ok' });
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+ console.log(`Server running on port ${PORT}`);
 });
